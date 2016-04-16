@@ -125,20 +125,13 @@ function EntityFactory(synchronizer) {
 }
 
 EntityFactory.prototype.sphere = function (x, y, z, r, color) {
-  var body = new CANNON.Body();
+  var body = new CANNON.Body({ mass: 1 });
   var geometry = new THREE.SphereGeometry(r, 12, 12);
   var material = new THREE.MeshLambertMaterial({ color: color });
   var mesh = new THREE.Mesh(geometry, material);
 
   body.addShape(new CANNON.Sphere(r));
-
-  body.position.x = x;
-  body.position.y = y;
-  body.position.z = z;
-
-  // mesh.position.x = x;
-  // mesh.position.y = y;
-  // mesh.position.z = z;
+  body.position = new CANNON.Vec3(x, y, z);
 
   this.synchronizer.add(mesh, body);
 };
@@ -175,7 +168,7 @@ function initialize() {
   canvas.onmousemove = colorizer.hover.bind(colorizer);
 
   new GameLoop([
-    //new PhysicsSystem(world),
+    new PhysicsSystem(world),
     synchronizer,
     new RenderingSystem(renderer, scene, camera)
   ]).start();
