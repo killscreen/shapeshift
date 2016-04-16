@@ -52,6 +52,41 @@ PhysicsLoop.prototype.body = function () {
 };
 
 
+function Synchronizer(scene, world) {
+  this.entities = [];
+  this.scene = scene;
+  this.world = world;
+}
+
+Synchronizer.prototype.add = function (mesh, body) {
+  var entity = { mesh: mesh, body: body };
+  this.scene.add(mesh);
+  this.world.addBody(body);
+  return this.remove.bind(this, entity);
+};
+
+Synchronizer.prototype.remove = function (entity) {
+  this.dirty = true;
+  entity.remove = true;
+  this.scene.remove(entity.mesh);
+  this.world.removeBody(entity.body);
+};
+
+Synchronizer.prototype.synchronize = function () {
+  if (this.dirty) {
+    this.entities = this.
+    this.dirty = false;
+  }
+  this.entities.forEach(function (entity) {
+    entity.mesh.position.x = entity.body.position.x;
+    entity.mesh.position.y = entity.body.position.y;
+    entity.mesh.position.z = entity.body.position.z;
+  });
+};
+
+
+
+
 function Colorizer(canvas, scene, camera) {
   this.raycaster = new THREE.Raycaster();
   this.canvas = canvas;
