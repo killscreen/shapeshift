@@ -11,39 +11,42 @@ Loop.prototype.start = function () {
 
 Loop.prototype.next = function () {
   if (!this.active) return;
-  this.body();
+  this.update();
   this.schedule(this.next.bind(this));
 };
 
 Loop.prototype.stop = function () {
   this.active = false;
-}
+};
 
+Loop.prototype.update = function () {
+};
 
-function RenderingLoop(renderer, scene, camera) {
+function GameLoop(systems) {
   Loop.call(this, window.requestAnimationFrame.bind(window));
-  this.renderer = renderer;
-  this.scene = scene;
-  this.camera = camera;
+  this.systems = systems;
 }
 
-RenderingLoop.prototype = Object.create(Loop.prototype);
 
-RenderingLoop.prototype.body = function () {
-  this.renderer.render(this.scene, this.camera);
+GameLoop.prototype = Object.create(Loop.prototype);
+
+GameLoop.prototype.update = function () {
+  this.systems.forEach(function (system) {
+    system.update();
+  });
 };
 
 
-function PhysicsLoop(world) {
-  Loop.call(this, function (callback) {
-    window.setTimeout(callback, 15);
-  });
-  this.world = world;
+function RenderingSystem(renderer, scene, camera) {
+  this.update = renderer.render.bind(renderer, scene, camera);
 }
 
-PhysicsLoop.prototype = Object.create(Loop.prototype);
 
-PhysicsLoop.prototype.body = function () {
+function PhysicsSystem(world) {
+    this.world = world;
+}
+
+PhysicsSystem.prototype.update = function () {
   var now = Date.now();
   if (this.last !== undefined) {
     this.world.step(1 / 60, (now - last) / 1000, 3);
@@ -72,7 +75,7 @@ Synchronizer.prototype.remove = function (entity) {
   this.world.removeBody(entity.body);
 };
 
-Synchronizer.prototype.synchronize = function () {
+Synchronizer.prototype.update = function () {
   if (this.dirty) {
     this.entities = this.
     this.dirty = false;
@@ -128,6 +131,8 @@ function initialize() {
   var mesh = new THREE.Mesh(geometry, material);
   var light = new THREE.PointLight(0xFFFFFF);
 
+  //var world = new CANNON.World();
+
   var colorizer = new Colorizer(canvas, scene, camera);
 
   light.position.x = 5;
@@ -143,8 +148,11 @@ function initialize() {
 
   canvas.onmousemove = colorizer.hover.bind(colorizer);
 
-  new RenderingLoop(renderer, scene, camera).start();
-  new PhysicsLoop(mesh).start();
+  new GameLoop([
+    // new PhysicsSystem(world),
+    // new Synchronizer(scene, world),
+    new RenderingSystem(renderer, scene, camera)
+  ]).start();
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
