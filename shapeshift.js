@@ -34,17 +34,21 @@ RenderingLoop.prototype.body = function () {
 };
 
 
-function PhysicsLoop(mesh) {
+function PhysicsLoop(world) {
   Loop.call(this, function (callback) {
     window.setTimeout(callback, 15);
   });
-  this.mesh = mesh;
+  this.world = world;
 }
 
 PhysicsLoop.prototype = Object.create(Loop.prototype);
 
 PhysicsLoop.prototype.body = function () {
-  this.mesh.position.x = Math.sin(Date.now() / 1000);
+  var now = Date.now();
+  if (this.last !== undefined) {
+    this.world.step(1 / 60, (now - last) / 1000, 3);
+  }
+  this.last = now;
 };
 
 
