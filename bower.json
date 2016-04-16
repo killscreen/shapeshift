@@ -1,0 +1,22 @@
+{
+  "name": "shapeshift",
+  "description": "Ludum Dare 35 entry",
+  "main": "index.js",
+  "authors": [
+    "Killscreen"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "video",
+    "game",
+    "ludum",
+    "dare"
+  ],
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "dependencies": {
+    "cannon.js": "^0.6.2",
+    "three.js": "^0.75.0"
+  }
+}
