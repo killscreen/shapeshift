@@ -22,11 +22,11 @@ Loop.prototype.stop = function () {
 Loop.prototype.update = function () {
 };
 
+
 function GameLoop(systems) {
   Loop.call(this, window.requestAnimationFrame.bind(window));
   this.systems = systems;
 }
-
 
 GameLoop.prototype = Object.create(Loop.prototype);
 
@@ -43,13 +43,13 @@ function RenderingSystem(renderer, scene, camera) {
 
 
 function PhysicsSystem(world) {
-    this.world = world;
+  this.world = world;
 }
 
 PhysicsSystem.prototype.update = function () {
   var now = Date.now();
   if (this.last !== undefined) {
-    this.world.step(1 / 60, (now - last) / 1000, 3);
+    this.world.step(1 / 60, (now - this.last) / 1000, 3);
   }
   this.last = now;
 };
@@ -65,6 +65,7 @@ Synchronizer.prototype.add = function (mesh, body) {
   var entity = { mesh: mesh, body: body };
   this.scene.add(mesh);
   this.world.addBody(body);
+  this.entities.push(entity);
   return this.remove.bind(this, entity);
 };
 
@@ -77,7 +78,9 @@ Synchronizer.prototype.remove = function (entity) {
 
 Synchronizer.prototype.update = function () {
   if (this.dirty) {
-    this.entities = this.
+    this.entities = this.entities.filter(function (entity) {
+      return !entity.remove;
+    });
     this.dirty = false;
   }
   this.entities.forEach(function (entity) {
@@ -86,8 +89,6 @@ Synchronizer.prototype.update = function () {
     entity.mesh.position.z = entity.body.position.z;
   });
 };
-
-
 
 
 function Colorizer(canvas, scene, camera) {
@@ -119,6 +120,30 @@ Colorizer.prototype.hover = function (event) {
 };
 
 
+function EntityFactory(synchronizer) {
+  this.synchronizer = synchronizer;
+}
+
+EntityFactory.prototype.sphere = function (x, y, z, r, color) {
+  var body = new CANNON.Body();
+  var geometry = new THREE.SphereGeometry(r, 12, 12);
+  var material = new THREE.MeshLambertMaterial({ color: color });
+  var mesh = new THREE.Mesh(geometry, material);
+
+  body.addShape(new CANNON.Sphere(r));
+
+  body.position.x = x;
+  body.position.y = y;
+  body.position.z = z;
+
+  // mesh.position.x = x;
+  // mesh.position.y = y;
+  // mesh.position.z = z;
+
+  this.synchronizer.add(mesh, body);
+};
+
+
 function initialize() {
   var canvas = document.getElementById('main');
   var w = canvas.width, h = canvas.height;
@@ -131,26 +156,27 @@ function initialize() {
   var mesh = new THREE.Mesh(geometry, material);
   var light = new THREE.PointLight(0xFFFFFF);
 
-  //var world = new CANNON.World();
+  var world = new CANNON.World();
 
   var colorizer = new Colorizer(canvas, scene, camera);
+  var synchronizer = new Synchronizer(scene, world);
+  var factory = new EntityFactory(synchronizer);
 
   light.position.x = 5;
   light.position.y = 5;
 
-  mesh.position.z = -10;
+  factory.sphere(1, 1, -13, 1, 0x00FFFF);
+  factory.sphere(-1, 0, -13, 1.5, 0xAA00FF);
 
   scene.add(camera);
-  scene.add(mesh);
   scene.add(light);
 
   renderer.setSize(canvas.width, canvas.height);
-
   canvas.onmousemove = colorizer.hover.bind(colorizer);
 
   new GameLoop([
-    // new PhysicsSystem(world),
-    // new Synchronizer(scene, world),
+    //new PhysicsSystem(world),
+    synchronizer,
     new RenderingSystem(renderer, scene, camera)
   ]).start();
 }
