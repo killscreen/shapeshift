@@ -47,6 +47,36 @@ PhysicsLoop.prototype.body = function () {
   this.mesh.position.x = Math.sin(Date.now() / 1000);
 };
 
+
+function Colorizer(canvas, scene, camera) {
+  this.raycaster = new THREE.Raycaster();
+  this.canvas = canvas;
+  this.scene = scene;
+  this.camera = camera;
+}
+
+Colorizer.prototype.hover = function (event) {
+  var x = event.pageX - this.canvas.offsetLeft;
+  var y = event.pageY - this.canvas.offsetTop;
+  var w = this.canvas.width;
+  var h = this.canvas.height;
+  var mouse = new THREE.Vector2(x / w * 2 - 1, -y / h * 2 + 1);
+  var intersections;
+
+  this.raycaster.setFromCamera(mouse, this.camera);
+  intersections = this.raycaster.intersectObjects(this.scene.children);
+
+  if (this.previous) {
+    this.previous.material.color.setHex(0x00BB00);
+    this.previous = undefined;
+  }
+  if (intersections.length > 0) {
+    intersections[0].object.material.color.setHex(0xBB0000);
+    this.previous = intersections[0].object;
+  }
+};
+
+
 function initialize() {
   var canvas = document.getElementById('main');
   var w = canvas.width, h = canvas.height;
@@ -59,6 +89,8 @@ function initialize() {
   var mesh = new THREE.Mesh(geometry, material);
   var light = new THREE.PointLight(0xFFFFFF);
 
+  var colorizer = new Colorizer(canvas, scene, camera);
+
   light.position.x = 5;
   light.position.y = 5;
 
@@ -69,6 +101,8 @@ function initialize() {
   scene.add(light);
 
   renderer.setSize(canvas.width, canvas.height);
+
+  canvas.onmousemove = colorizer.hover.bind(colorizer);
 
   new RenderingLoop(renderer, scene, camera).start();
   new PhysicsLoop(mesh).start();
